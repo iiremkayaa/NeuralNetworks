@@ -2,14 +2,12 @@ from preprocess import read_data, create_samples, split_data
 import numpy as np
 import os
 import random
-import math
-from sympy import Symbol
 # HYPERPARAMETERS
 input_size = 50 #size of each word vector
 output_size = 2 #number of classes
 hidden_layer_size = 100
 learning_rate = 0.1
-number_of_epochs = 100
+number_of_epochs = 1000
 path = "./data" #use relative path like this
 #This function returns words and their vectors with index
 def match_words(): 
@@ -79,8 +77,8 @@ def loss_function(true_labels, probabilities):
     return -(np.dot(true_labels, np.log(probabilities).T) + np.dot(1 - true_labels, np.log(1 - probabilities).T))
    
 def derivation_of_loss_function(true_labels, probabilities):
-    #return -np.divide(true_labels, probabilities.T) + np.divide((1-true_labels), (1-probabilities).T)
     return -(true_labels / probabilities[:, np.newaxis]) + (1-true_labels) / (1-probabilities)[:, np.newaxis]
+
 # softmax is used to turn activations into probability distribution
 def softmax(layer):
     return np.exp(layer-layer.max())/np.exp(layer-layer.max()).sum()
@@ -108,7 +106,7 @@ def embedding_layer(samples):
             word_vector.append(random.random())
     return np.array(word_vector)
 
-# backward_pass updates weight and bias for hidden and output.
+# backward_pass updates weight and bias for hidden and output
 def backward_pass(input_layer, hidden_layers , output_layer, loss): 
     global weightForHidden,biasForHidden,weightForOuput,biasForOutput
     word_vector=[]
@@ -122,9 +120,9 @@ def backward_pass(input_layer, hidden_layers , output_layer, loss):
             word_vector.append(random.random())
     word_vector=np.array(word_vector)
     updatedBias2=np.sum(loss)
-    updatedWeight2=np.dot(hidden_layers,loss.T)
-    D = np.multiply(np.dot(loss,updatedWeight2), derivation_of_activation_function(hidden_layers))
-    updatedWeight1 =np.dot(input_layer.T,D) 
+    updatedWeight2=np.dot(hidden_layers,loss.T) 
+    D = np.multiply(np.dot(updatedWeight2,loss), derivation_of_activation_function(hidden_layers))
+    updatedWeight1 =np.dot(word_vector,D.T) 
     updatedBias1 =np.sum(D)
     weightForHidden -= learning_rate*updatedWeight1
     biasForHidden -= learning_rate*updatedBias1
@@ -151,10 +149,6 @@ def train(train_data, train_labels, valid_data, valid_labels):
 
     return loss
 
-
-
-
-
 def test(test_data, test_labels):
 
     avg_loss = 0
@@ -177,9 +171,6 @@ def test(test_data, test_labels):
     accuracy_score = accuracy(labels, predictions)
 
     return accuracy_score,  avg_loss / len(test_data)
-
-
-
 
 def accuracy(true_labels, predictions):
     true_pred = 0
